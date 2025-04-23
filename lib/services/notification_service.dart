@@ -6,7 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tzl;
 // Flutter native timezone import dihapus
 import '../models/todo.dart'; // Sesuaikan path jika model Todo Anda di lokasi berbeda
-import 'dart:math'; // Untuk fallback ID generator
+// import 'dart:math'; // Untuk fallback ID generator
 
 class NotificationService {
   // Singleton pattern setup
@@ -21,53 +21,55 @@ class NotificationService {
 
   // Konstanta untuk Channel Android
   static const String _androidChannelId = 'todo_deadline_channel_v1';
-  static const String _androidChannelName = 'Pengingat Deadline Tugas';
+  static const String _androidChannelName =
+      'Pengingat Tugas & Deadline'; // Nama diperbaiki
   static const String _androidChannelDesc =
-      'Notifikasi untuk deadline tugas ToDo';
+      'Notifikasi untuk deadline dan pengingat tugas ToDo'; // Deskripsi diperbaiki
 
   /// Menginisialisasi service notifikasi, timezone, dan meminta izin.
   Future<void> initialize() async {
-    // 1. Inisialisasi Database Zona Waktu
-    tzl.initializeTimeZones();
+    try {
+      // 1. Inisialisasi Database Zona Waktu
+      tzl.initializeTimeZones();
 
-    // 2. Dapatkan dan Set Zona Waktu Lokal
-    await _configureLocalTimeZone();
+      // 2. Dapatkan dan Set Zona Waktu Lokal
+      await _configureLocalTimeZone();
 
-    // 3. Setting Inisialisasi Spesifik Platform
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings(
-          '@drawable/app_icon',
-        ); // Ganti dgn nama ikon Anda
+      // 3. Setting Inisialisasi Spesifik Platform
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@drawable/app_icon');
 
-    // Setting untuk iOS/macOS (parameter onDidReceiveLocalNotification dihapus)
-    final DarwinInitializationSettings
-    initializationSettingsDarwin = DarwinInitializationSettings(
-      requestAlertPermission: false, // Izin diminta terpisah
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-      // onDidReceiveLocalNotification: onDidReceiveLocalNotification, // Dihapus
-    );
+      // Setting untuk iOS/macOS
+      final DarwinInitializationSettings initializationSettingsDarwin =
+          DarwinInitializationSettings(
+            requestAlertPermission: false, // Izin diminta terpisah
+            requestBadgePermission: false,
+            requestSoundPermission: false,
+          );
 
-    // 4. Gabungkan Setting Platform
-    final InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsDarwin,
-          macOS: initializationSettingsDarwin,
-        );
+      // 4. Gabungkan Setting Platform
+      final InitializationSettings initializationSettings =
+          InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsDarwin,
+            macOS: initializationSettingsDarwin,
+          );
 
-    // 5. Inisialisasi Plugin dengan handler tap notifikasi
-    await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
-      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
-    );
+      // 5. Inisialisasi Plugin dengan handler tap notifikasi
+      await flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+        onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
+      );
 
-    // 6. Buat Channel Notifikasi Android (Penting untuk Android 8+)
-    await _createAndroidNotificationChannel();
+      // 6. Buat Channel Notifikasi Android (Penting untuk Android 8+)
+      await _createAndroidNotificationChannel();
 
-    // 7. Minta Izin Notifikasi
-    await requestPermissions();
+      // 7. Minta Izin Notifikasi
+      await requestPermissions();
+    } catch (e) {
+      print('Error during initialization: $e');
+    }
   }
 
   /// Konfigurasi zona waktu lokal menggunakan DateTime bulit-in
@@ -77,7 +79,7 @@ class NotificationService {
       // Menggunakan DateTime built-in untuk mendapatkan timezone
       timeZoneName = DateTime.now().timeZoneName;
       print('Timezone detected by DateTime: $timeZoneName');
-      
+
       // Jika timezone nama pendek (seperti WIB, GMT, dll) gunakan fallback
       if (timeZoneName.length <= 4) {
         timeZoneName = 'Asia/Jakarta'; // Default untuk Indonesia
@@ -125,11 +127,10 @@ class NotificationService {
 
   /// Meminta izin notifikasi kepada pengguna (iOS & Android 13+)
   Future<bool> requestPermissions() async {
-    bool? result = false; // Default ke false
+    bool result = false; // Default ke false
 
     // iOS & macOS Permissions
-    if (defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
       // Coba minta izin iOS
       final bool? iosResult = await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -138,17 +139,16 @@ class NotificationService {
           ?.requestPermissions(alert: true, badge: true, sound: true);
       result = iosResult ?? false; // Gunakan hasil iOS jika ada
       print("iOS Permission Request Result: $result");
-
-      // Jika di macOS dan hasil iOS null (plugin mungkin tidak gabung), coba macOS specific
-      if (result == false && defaultTargetPlatform == TargetPlatform.macOS) {
-        final bool? macOsResult = await flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              MacOSFlutterLocalNotificationsPlugin
-            >()
-            ?.requestPermissions(alert: true, badge: true, sound: true);
-        result = macOsResult ?? false; // Gunakan hasil macOS jika ada
-        print("macOS Specific Permission Request Result: $result");
-      }
+    }
+    // Penanganan macOS secara terpisah
+    else if (defaultTargetPlatform == TargetPlatform.macOS) {
+      final bool? macOsResult = await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+      result = macOsResult ?? false; // Gunakan hasil macOS jika ada
+      print("macOS Permission Request Result: $result");
     }
     // Android Permissions (Android 13+)
     else if (defaultTargetPlatform == TargetPlatform.android) {
@@ -175,11 +175,16 @@ class NotificationService {
   ) async {
     final String? payload = notificationResponse.payload;
     print('NOTIFICATION TAPPED (Response): Payload: $payload');
-    if (payload != null && payload.startsWith('todo_id=')) {
-      final todoId = payload.substring('todo_id='.length);
-      print('Tapped notification for Todo ID: $todoId');
-      // TODO: Implementasikan navigasi atau aksi berdasarkan todoId
-      // Contoh: eventBus.fire(NavigateToTodoDetailEvent(todoId));
+    if (payload != null) {
+      if (payload.startsWith('todo_id=')) {
+        final todoId = payload.substring('todo_id='.length);
+        print('Tapped DEADLINE notification for Todo ID: $todoId');
+        // TODO: Implementasikan navigasi atau aksi berdasarkan todoId
+      } else if (payload.startsWith('reminder_todo_id=')) {
+        final todoId = payload.substring('reminder_todo_id='.length);
+        print('Tapped REMINDER notification for Todo ID: $todoId');
+        // TODO: Implementasikan navigasi atau aksi berdasarkan todoId
+      }
     }
   }
 
@@ -196,27 +201,40 @@ class NotificationService {
   }
 
   /// Helper untuk generate ID notifikasi integer 32-bit dari ID Todo string
-  int _generateNotificationId(String todoId) {
+  /// dengan parameter prefix untuk membedakan jenis notifikasi
+  int _generateNotificationId(String todoId, {String prefix = 'd'}) {
+    // Tentukan kode awalan berdasarkan jenis notifikasi
+    int prefixCode = (prefix == 'r') ? 2000000 : 1000000;
+
+    // Ekstrak digit dari todoId
     var numericPart = todoId.replaceAll(RegExp(r'[^0-9]'), '');
-    if (numericPart.length > 9) {
-      numericPart = numericPart.substring(numericPart.length - 9);
-    } else if (numericPart.isEmpty) {
-      numericPart = todoId.hashCode.abs().toString();
-      if (numericPart.length > 9) {
-        numericPart = numericPart.substring(numericPart.length - 9);
+
+    // Proses numerik atau hashcode
+    int baseId;
+    if (numericPart.isEmpty) {
+      // Tidak ada digit numerik, gunakan hashcode
+      baseId = todoId.hashCode.abs() % 1000000;
+    } else {
+      // Ada digit numerik, ambil 6 digit terakhir jika perlu
+      if (numericPart.length > 6) {
+        numericPart = numericPart.substring(numericPart.length - 6);
       }
+      baseId = int.tryParse(numericPart) ?? todoId.hashCode.abs() % 1000000;
     }
-    int notificationId =
-        int.tryParse(numericPart.padLeft(1, '0')) ??
-        Random().nextInt(2147483647);
+
+    // Gabungkan prefixCode dengan baseId
+    int notificationId = prefixCode + baseId;
+
+    // Pastikan dalam range valid integer 32-bit
     return notificationId.abs() % 2147483647;
   }
 
-  /// Menjadwalkan notifikasi deadline untuk sebuah Todo
-  Future<void> scheduleNotification(Todo todo) async {
+  /// Menjadwalkan notifikasi DEADLINE untuk sebuah Todo
+  /// Fungsi ini menggantikan scheduleNotification untuk konsistensi penamaan
+  Future<void> scheduleDeadlineNotification(Todo todo) async {
     if (todo.deadline == null || todo.deadline!.isBefore(DateTime.now())) {
-      await cancelNotification(todo.id);
-      print("Skipping schedule for ${todo.title}: No valid deadline.");
+      await cancelDeadlineNotification(todo.id);
+      print("Skipping schedule for DEADLINE ${todo.title}: No valid deadline.");
       return;
     }
 
@@ -226,9 +244,9 @@ class NotificationService {
     );
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) {
       print(
-        "Attempted to schedule notification in the past for ${todo.title}. Cancelling any existing.",
+        "Attempted to schedule DEADLINE notification in the past for ${todo.title}. Cancelling any existing.",
       );
-      await cancelNotification(todo.id);
+      await cancelDeadlineNotification(todo.id);
       return;
     }
 
@@ -242,7 +260,7 @@ class NotificationService {
           priority: Priority.high,
           ticker: 'Pengingat Tugas',
           playSound: true,
-          icon: '@drawable/app_icon', // Pastikan ikon ini ada
+          icon: '@drawable/app_icon',
         );
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -255,7 +273,7 @@ class NotificationService {
       macOS: iosDetails,
     );
 
-    final int notificationId = _generateNotificationId(todo.id);
+    final int notificationId = _generateNotificationId(todo.id, prefix: 'd');
 
     // Lakukan penjadwalan
     try {
@@ -267,36 +285,130 @@ class NotificationService {
         platformDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: 'todo_id=${todo.id}',
-        // matchDateTimeComponents: DateTimeComponents.time, // Hapus atau set null jika tidak berulang
       );
       print(
-        "Scheduled notification for ${todo.title} at $scheduledDate (Notif ID: $notificationId, Todo ID: ${todo.id})",
+        "Scheduled DEADLINE notification for ${todo.title} at $scheduledDate (Notif ID: $notificationId, Todo ID: ${todo.id})",
       );
     } catch (e) {
       print(
-        "Error scheduling notification ID $notificationId for ${todo.title}: $e",
+        "Error scheduling DEADLINE notification ID $notificationId for ${todo.title}: $e",
       );
     }
   }
 
-  /// Membatalkan notifikasi terjadwal berdasarkan ID Todo
-  Future<void> cancelNotification(String todoId) async {
-    final int notificationId = _generateNotificationId(todoId);
+  /// Membatalkan notifikasi DEADLINE terjadwal berdasarkan ID Todo
+  Future<void> cancelDeadlineNotification(String todoId) async {
+    final int notificationId = _generateNotificationId(todoId, prefix: 'd');
     try {
       await flutterLocalNotificationsPlugin.cancel(notificationId);
       print(
-        "Cancelled notification for Todo ID: $todoId (Notif ID: $notificationId)",
+        "Cancelled DEADLINE notification for Todo ID: $todoId (Notif ID: $notificationId)",
       );
     } catch (e) {
       print(
-        "Error cancelling notification $todoId (Notif ID: $notificationId): $e",
+        "Error cancelling DEADLINE notification $todoId (Notif ID: $notificationId): $e",
       );
     }
+  }
+
+  /// Menjadwalkan notifikasi REMINDER untuk sebuah Todo
+  Future<void> scheduleReminderNotification(Todo todo) async {
+    if (todo.reminderDateTime == null ||
+        todo.reminderDateTime!.isBefore(DateTime.now())) {
+      await cancelReminderNotification(todo.id);
+      print(
+        "Skipping schedule REMINDER for ${todo.title}: No valid reminder time.",
+      );
+      return;
+    }
+
+    final tz.TZDateTime scheduledDate = tz.TZDateTime.from(
+      todo.reminderDateTime!,
+      tz.local,
+    );
+    if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) {
+      print("Attempted to schedule REMINDER in the past for ${todo.title}.");
+      await cancelReminderNotification(todo.id);
+      return;
+    }
+
+    // Detail Notifikasi
+    const AndroidNotificationDetails reminderAndroidDetails =
+        AndroidNotificationDetails(
+          _androidChannelId,
+          _androidChannelName,
+          channelDescription: _androidChannelDesc,
+          importance: Importance.high,
+          priority: Priority.defaultPriority,
+          playSound: true,
+          icon: '@drawable/app_icon',
+        );
+    const DarwinNotificationDetails reminderIosDetails =
+        DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        );
+    const NotificationDetails reminderPlatformDetails = NotificationDetails(
+      android: reminderAndroidDetails,
+      iOS: reminderIosDetails,
+      macOS: reminderIosDetails,
+    );
+
+    final int notificationId = _generateNotificationId(todo.id, prefix: 'r');
+
+    try {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        notificationId,
+        'Pengingat: ${todo.title}',
+        'Jangan lupa tentang tugas "${todo.title}".',
+        scheduledDate,
+        reminderPlatformDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'reminder_todo_id=${todo.id}',
+      );
+      print(
+        "Scheduled REMINDER notification for ${todo.title} at $scheduledDate (Notif ID: $notificationId, Todo ID: ${todo.id})",
+      );
+    } catch (e) {
+      print(
+        "Error scheduling REMINDER notification ID $notificationId for ${todo.title}: $e",
+      );
+    }
+  }
+
+  /// Membatalkan notifikasi REMINDER terjadwal berdasarkan ID Todo
+  Future<void> cancelReminderNotification(String todoId) async {
+    final int notificationId = _generateNotificationId(todoId, prefix: 'r');
+    try {
+      await flutterLocalNotificationsPlugin.cancel(notificationId);
+      print(
+        "Cancelled REMINDER notification for Todo ID: $todoId (Notif ID: $notificationId)",
+      );
+    } catch (e) {
+      print(
+        "Error cancelling REMINDER notification $todoId (Notif ID: $notificationId): $e",
+      );
+    }
+  }
+
+  /// Untuk kompatibilitas dengan kode lama - panggil scheduleDeadlineNotification
+  Future<void> scheduleNotification(Todo todo) async {
+    await scheduleDeadlineNotification(todo);
+  }
+
+  /// Untuk kompatibilitas dengan kode lama - panggil cancelDeadlineNotification
+  Future<void> cancelNotification(String todoId) async {
+    await cancelDeadlineNotification(todoId);
   }
 
   /// Membatalkan semua notifikasi terjadwal (gunakan hati-hati)
   Future<void> cancelAllNotifications() async {
-    await flutterLocalNotificationsPlugin.cancelAll();
-    print("Cancelled ALL scheduled notifications");
+    try {
+      await flutterLocalNotificationsPlugin.cancelAll();
+      print("Cancelled ALL scheduled notifications (Deadlines and Reminders)");
+    } catch (e) {
+      print("Error cancelling all notifications: $e");
+    }
   }
 } // Akhir Class NotificationService
