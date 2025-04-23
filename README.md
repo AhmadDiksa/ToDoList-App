@@ -19,7 +19,7 @@ A feature-rich To-Do List application built with Flutter. This app helps you org
 
 2. Clone this repository:
    ```
-   git clone <repository-url>
+   git clone https://github.com/AhmadDiksa/ToDoList-App
    ```
 
 3. Navigate to the project directory:
