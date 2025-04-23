@@ -1,58 +1,69 @@
 // lib/models/todo.dart
+// import 'package:flutter/foundation.dart';
 
 class Todo {
   final String id;
   String title;
-  String date; // Tanggal info umum
-  DateTime? deadline; // Deadline tugas (bisa null)
+  String date;
+  DateTime? deadline;
+  DateTime? reminderDateTime; // <-- Field Baru: Waktu Pengingat
+  String? repeatRule;       // <-- Field Baru: Aturan Pengulangan (String sederhana)
+  String? notes;            // <-- Field Baru: Catatan
   bool isDone;
   bool isStarred;
   String category;
+  // List<String> subtasks; // Contoh jika ingin subtask (kompleks, simpan sbg JSON?)
+  // List<String> attachments; // Contoh jika ingin lampiran (kompleks)
 
   Todo({
     required this.id,
     required this.title,
     required this.date,
-    this.deadline, // Tambahkan deadline di constructor
+    this.deadline,
+    this.reminderDateTime, // <-- Tambah di constructor
+    this.repeatRule,       // <-- Tambah di constructor
+    this.notes,            // <-- Tambah di constructor
     this.isDone = false,
     this.isStarred = false,
     required this.category,
   });
 
-  // Konversi Todo ke Map untuk database
+  // Convert a Todo object into a Map.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'title': title,
       'date': date,
-      // Simpan DateTime sebagai string ISO 8601 jika tidak null
       'deadline': deadline?.toIso8601String(),
-      'isDone': isDone ? 1 : 0, // boolean ke integer
-      'isStarred': isStarred ? 1 : 0, // boolean ke integer
+      'reminderDateTime': reminderDateTime?.toIso8601String(), // <-- Konversi ke String
+      'repeatRule': repeatRule,                             // <-- Simpan String
+      'notes': notes,                                       // <-- Simpan String
+      'isDone': isDone ? 1 : 0,
+      'isStarred': isStarred ? 1 : 0,
       'category': category,
     };
   }
 
-  // Buat Todo dari Map database
+  // Create a Todo object from a Map.
   factory Todo.fromMap(Map<String, dynamic> map) {
     return Todo(
       id: map['id'] as String,
       title: map['title'] as String,
       date: map['date'] as String,
-      // Parse string ISO 8601 kembali ke DateTime jika tidak null
-      deadline:
-          map['deadline'] == null
-              ? null
-              : DateTime.tryParse(map['deadline'] as String),
-      isDone: map['isDone'] == 1, // integer ke boolean
-      isStarred: map['isStarred'] == 1, // integer ke boolean
+      deadline: map['deadline'] == null ? null : DateTime.tryParse(map['deadline'] as String),
+      // <-- Parse dari String, handle null
+      reminderDateTime: map['reminderDateTime'] == null ? null : DateTime.tryParse(map['reminderDateTime'] as String),
+      repeatRule: map['repeatRule'] as String?, // <-- Ambil String, bisa null
+      notes: map['notes'] as String?,           // <-- Ambil String, bisa null
+      isDone: map['isDone'] == 1,
+      isStarred: map['isStarred'] == 1,
       category: map['category'] as String,
     );
   }
 
   @override
   String toString() {
-    // Memudahkan debugging
-    return 'Todo{id: $id, title: $title, date: $date, deadline: $deadline, isDone: $isDone, isStarred: $isStarred, category: $category}';
+    // Tambahkan field baru ke toString untuk debug
+    return 'Todo{id: $id, title: $title, deadline: $deadline, reminder: $reminderDateTime, repeat: $repeatRule, notes: $notes, ...}';
   }
 }
