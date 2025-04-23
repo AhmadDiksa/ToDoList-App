@@ -1,9 +1,10 @@
 // lib/models/todo.dart
 
 class Todo {
-  final String id; // Keep String ID for consistency with previous example
+  final String id;
   String title;
-  String date;
+  String date; // Tanggal info umum
+  DateTime? deadline; // Deadline tugas (bisa null)
   bool isDone;
   bool isStarred;
   String category;
@@ -12,39 +13,46 @@ class Todo {
     required this.id,
     required this.title,
     required this.date,
+    this.deadline, // Tambahkan deadline di constructor
     this.isDone = false,
     this.isStarred = false,
     required this.category,
   });
 
-  // Convert a Todo object into a Map. Keys must correspond to column names.
+  // Konversi Todo ke Map untuk database
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'title': title,
       'date': date,
-      'isDone': isDone ? 1 : 0, // Store bool as integer
-      'isStarred': isStarred ? 1 : 0, // Store bool as integer
+      // Simpan DateTime sebagai string ISO 8601 jika tidak null
+      'deadline': deadline?.toIso8601String(),
+      'isDone': isDone ? 1 : 0, // boolean ke integer
+      'isStarred': isStarred ? 1 : 0, // boolean ke integer
       'category': category,
     };
   }
 
-  // Create a Todo object from a Map.
+  // Buat Todo dari Map database
   factory Todo.fromMap(Map<String, dynamic> map) {
     return Todo(
       id: map['id'] as String,
       title: map['title'] as String,
       date: map['date'] as String,
-      // Convert integer back to bool
-      isDone: map['isDone'] == 1,
-      isStarred: map['isStarred'] == 1,
+      // Parse string ISO 8601 kembali ke DateTime jika tidak null
+      deadline:
+          map['deadline'] == null
+              ? null
+              : DateTime.tryParse(map['deadline'] as String),
+      isDone: map['isDone'] == 1, // integer ke boolean
+      isStarred: map['isStarred'] == 1, // integer ke boolean
       category: map['category'] as String,
     );
   }
 
-  // Optional: Override toString for easy debugging
   @override
   String toString() {
-    return 'Todo{id: $id, title: $title, date: $date, isDone: $isDone, isStarred: $isStarred, category: $category}';
+    // Memudahkan debugging
+    return 'Todo{id: $id, title: $title, date: $date, deadline: $deadline, isDone: $isDone, isStarred: $isStarred, category: $category}';
   }
 }

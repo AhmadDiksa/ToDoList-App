@@ -1,54 +1,59 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart'; // <-- 1. Import package provider
-import 'screens/home_screen.dart'; // Import halaman utama
-import 'providers/todo_list_provider.dart'; // <-- 2. Import kelas provider Anda
+import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart'; // Import untuk locale DateFormat
+import 'screens/home_screen.dart';
+import 'providers/todo_list_provider.dart';
+import 'services/notification_service.dart'; // <-- Import Notification Service
 
-void main() {
-  // Pastikan Flutter binding terinisialisasi jika menggunakan SystemChrome sebelum runApp
+// Fungsi main menjadi async
+Future<void> main() async {
+  // Pastikan Flutter binding siap
   WidgetsFlutterBinding.ensureInitialized();
-  // Atur gaya status bar
+
+  // Inisialisasi locale untuk DateFormat (PENTING!)
+  await initializeDateFormatting(
+    'id_ID',
+    null,
+  ); // Ganti 'id_ID' jika perlu locale lain
+
+  // Inisialisasi Notification Service (termasuk timezone)
+  await NotificationService().initialize();
+
+  // Setup System UI Overlay (Status bar style)
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // Buat status bar transparan
+      statusBarColor: Colors.transparent,
       statusBarIconBrightness:
-          Brightness
-              .dark, // Ikon status bar gelap (cocok untuk background terang)
-      statusBarBrightness: Brightness.light, // Untuk iOS (jika perlu)
+          Brightness.dark, // Ikon gelap untuk background terang
+      statusBarBrightness: Brightness.light, // Untuk iOS
     ),
   );
 
-  // 3. Bungkus pemanggilan runApp dengan ChangeNotifierProvider
+  // Jalankan aplikasi dengan Provider
   runApp(
     ChangeNotifierProvider(
-      // Fungsi 'create' ini akan membuat instance TodoListProvider
-      // saat pertama kali dibutuhkan dan menyediakannya ke widget tree di bawahnya.
-      create: (context) => TodoListProvider(),
-      // Widget MyApp (dan seluruh aplikasinya) menjadi anak (child) dari Provider.
-      // Artinya, semua widget di dalam MyApp bisa mengakses TodoListProvider.
-      child: const MyApp(),
+      create: (context) => TodoListProvider(), // Buat instance TodoListProvider
+      child: const MyApp(), // Root widget aplikasi
     ),
   );
 }
 
-// Widget root aplikasi Anda
+// Widget MyApp (Root Aplikasi)
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // MyApp sekarang dibuat *di dalam* lingkup ChangeNotifierProvider.
     return MaterialApp(
       title: 'To-Do List App',
       theme: ThemeData(
-        // Pengaturan tema dasar
+        // Tema aplikasi (seperti sebelumnya)
         primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.grey[50], // Background umum scaffold
-        fontFamily: 'Roboto', // Font default (opsional)
+        scaffoldBackgroundColor: Colors.grey[50],
+        fontFamily: 'Roboto',
         visualDensity: VisualDensity.adaptivePlatformDensity,
-
-        // Tema khusus untuk widget Chip (filter)
         chipTheme: ChipThemeData(
           backgroundColor: Colors.grey[200],
           disabledColor: Colors.grey.shade300,
@@ -72,33 +77,28 @@ class MyApp extends StatelessWidget {
           elevation: 0,
           pressElevation: 2,
         ),
-
-        // Tema khusus untuk Divider (pemisah list)
         dividerTheme: DividerThemeData(color: Colors.grey[200], thickness: 1),
-
-        // Tema default untuk Icon
         iconTheme: IconThemeData(color: Colors.grey[600]),
-
-        // Tema untuk TextButton (digunakan di AlertDialog)
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.blue[700], // Warna teks tombol
-          ),
+          style: TextButton.styleFrom(foregroundColor: Colors.blue[700]),
         ),
-
-        // Tema untuk FloatingActionButton
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Colors.blueAccent, // Warna FAB
-          elevation: 4.0, // Shadow FAB
+          backgroundColor: Colors.blueAccent,
+          elevation: 4.0,
+        ),
+        // Tambahkan tema untuk Time Picker jika perlu
+        timePickerTheme: TimePickerThemeData(
+          backgroundColor: Colors.white,
+          // ... styling lain
+        ),
+        // Tambahkan tema untuk Date Picker jika perlu
+        datePickerTheme: DatePickerThemeData(
+          backgroundColor: Colors.white,
+          // ... styling lain
         ),
       ),
-      // Halaman awal aplikasi
-      // HomeScreen akan dibuat sebagai turunan dari MaterialApp,
-      // yang berarti juga turunan dari ChangeNotifierProvider di atasnya,
-      // sehingga HomeScreen bisa mengakses TodoListProvider.
-      home: const HomeScreen(),
-      // Hilangkan banner debug di sudut kanan atas
-      debugShowCheckedModeBanner: false,
+      home: const HomeScreen(), // Halaman utama
+      debugShowCheckedModeBanner: false, // Hilangkan banner debug
     );
   }
 }

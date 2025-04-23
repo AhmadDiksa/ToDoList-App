@@ -1,10 +1,11 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../widgets/todo_list_item.dart';
-import '../widgets/custom_bottom_navbar.dart';
-import '../providers/todo_list_provider.dart';
-import '../models/todo.dart';
+import 'package:provider/provider.dart'; // State Management
+import '../widgets/todo_list_item.dart'; // Widget untuk item list
+import '../widgets/custom_bottom_navbar.dart'; // Widget Bottom Nav Bar kustom
+import '../providers/todo_list_provider.dart'; // Provider untuk state ToDo
+import '../models/todo.dart'; // Model data ToDo
+import 'todo_detail_screen.dart'; // Layar detail tugas
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,19 +15,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedBottomNavIndex = 0;
-  int _selectedChipIndex = 0;
+  // State lokal untuk UI HomeScreen itu sendiri
+  int _selectedBottomNavIndex = 0; // Index tab navigasi bawah yang aktif
+  int _selectedChipIndex = 0; // Index chip filter kategori yang aktif
+
+  // Daftar label untuk filter chip
   final List<String> _filterChips = ['Semua', 'Kerja', 'Pribadi', 'Wishlist'];
 
-  // Handler tap Bottom Nav Bar (No change)
+  // --- Handler Aksi UI ---
+
+  // Dipanggil saat tab navigasi bawah di-tap
   void _onBottomNavItemTapped(int index) {
     setState(() {
       _selectedBottomNavIndex = index;
+      // Di sini bisa ditambahkan logika navigasi ke layar lain jika index bukan 0
       print("Bottom Nav Tab index $index ditekan");
+      // if (index == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => CalendarScreen()));
     });
   }
 
-  // Handler tap Filter Chip (No change)
+  // Dipanggil saat filter chip di-tap
   void _onFilterChipTapped(int index) {
     setState(() {
       _selectedChipIndex = index;
@@ -34,10 +42,11 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Dialog Tambah Tugas (No change in logic, calls provider)
+  // Menampilkan dialog untuk menambah tugas baru
   void _showAddTodoDialog() {
     final TextEditingController todoController = TextEditingController();
-    String selectedCategory = 'Pribadi';
+    // Tentukan kategori default berdasarkan chip yang sedang aktif
+    String selectedCategory = 'Pribadi'; // Default jika 'Semua' dipilih
     if (_selectedChipIndex > 0 && _selectedChipIndex < _filterChips.length) {
       selectedCategory = _filterChips[_selectedChipIndex];
     }
@@ -45,57 +54,63 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
+        // Gunakan context dialog terpisah
         return AlertDialog(
           title: const Text('Tugas Baru'),
           content: TextField(
             controller: todoController,
-            autofocus: true,
+            autofocus: true, // Langsung fokus ke input field
             decoration: const InputDecoration(
               hintText: 'Masukkan judul tugas...',
             ),
-            textCapitalization: TextCapitalization.sentences,
+            textCapitalization:
+                TextCapitalization.sentences, // Huruf pertama kapital
+            // Tambah tugas saat tombol Enter/Submit di keyboard ditekan
             onSubmitted: (value) {
-              if (value.trim().isNotEmpty) {
-                // No await needed here, fire and forget
+              final title = value.trim();
+              if (title.isNotEmpty) {
+                // Panggil provider untuk menambah tugas (tanpa await dari UI)
+                // Gunakan context.read karena di dalam callback
                 Provider.of<TodoListProvider>(
                   context,
                   listen: false,
-                ).addTodo(value, selectedCategory);
+                ).addTodo(title, selectedCategory);
               }
-              Navigator.of(dialogContext).pop();
+              Navigator.of(dialogContext).pop(); // Tutup dialog
             },
           ),
           actions: <Widget>[
             TextButton(
               child: const Text('Batal'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
+              onPressed:
+                  () => Navigator.of(dialogContext).pop(), // Tutup dialog
             ),
             TextButton(
               child: const Text('Simpan'),
               onPressed: () {
-                final title = todoController.text;
-                if (title.trim().isNotEmpty) {
-                  // No await needed here
+                final title = todoController.text.trim();
+                if (title.isNotEmpty) {
+                  // Panggil provider untuk menambah tugas
                   Provider.of<TodoListProvider>(
                     context,
                     listen: false,
                   ).addTodo(title, selectedCategory);
                 }
-                Navigator.of(dialogContext).pop();
+                Navigator.of(dialogContext).pop(); // Tutup dialog
               },
             ),
           ],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
-          ),
+          ), // Sudut dialog rounded
         );
       },
     );
   }
 
-  // Handler Undo Delete (Calls provider - now async but no await needed from UI)
+  // Menangani aksi Undo setelah menghapus tugas
   void _handleUndoDelete(int originalIndex, Todo removedTodo) {
-    // No await needed here
+    // Panggil provider untuk mengembalikan tugas (tanpa await dari UI)
     Provider.of<TodoListProvider>(
       context,
       listen: false,
@@ -103,71 +118,82 @@ class _HomeScreenState extends State<HomeScreen> {
     print('Undo delete for: ${removedTodo.title}');
   }
 
-  // --- BUILD METHOD ---
+  // --- Build Method Utama ---
   @override
   Widget build(BuildContext context) {
-    // Akses Provider
+    // --- Mengakses Provider ---
+    // context.watch akan membuat widget ini rebuild saat provider memanggil notifyListeners()
     final todoProvider = context.watch<TodoListProvider>();
+
+    // Tentukan kategori filter yang sedang dipilih
     final selectedCategory = _filterChips[_selectedChipIndex];
-    // Filtered list obtained from provider
+
+    // Dapatkan daftar tugas yang sudah difilter dari provider
     final List<Todo> displayedTodos = todoProvider.getFilteredTodos(
       selectedCategory,
     );
 
+    // Log untuk debugging (bisa dihapus nanti)
     print(
       "Rebuilding HomeScreen. Loading: ${todoProvider.isLoading}, Filter: $selectedCategory, Count: ${displayedTodos.length}",
     );
 
     return Scaffold(
       body: SafeArea(
+        // Menghindari notch dan area sistem lainnya
         child: Column(
+          // Layout vertikal utama
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Baris Filter Chips (No change)
+            // --- Baris Filter Chips ---
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
                 vertical: 10.0,
               ),
               child: SizedBox(
-                height: 38, // Sesuaikan tinggi Chip
+                height: 38, // Tinggi baris chip
                 child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _filterChips.length + 1, // +1 untuk icon More
+                  scrollDirection: Axis.horizontal, // Scroll horizontal
+                  itemCount:
+                      _filterChips.length + 1, // Tambah 1 untuk ikon 'more'
                   separatorBuilder:
-                      (context, index) => const SizedBox(width: 8),
+                      (context, index) =>
+                          const SizedBox(width: 8), // Jarak antar chip
                   itemBuilder: (context, index) {
+                    // Item terakhir adalah ikon 'more'
                     if (index == _filterChips.length) {
-                      // Tombol More (...)
                       return IconButton(
                         icon: Icon(Icons.more_horiz, color: Colors.grey[600]),
                         onPressed: () {
                           print("Tombol More Chips ditekan");
-                          // Tampilkan menu atau dialog untuk filter/label lain
+                          // TODO: Tampilkan menu atau dialog filter tambahan
                         },
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4.0,
-                        ), // Kurangi padding
-                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        constraints:
+                            const BoxConstraints(), // Hapus constraint default
                         tooltip: 'Filter lainnya',
                       );
                     }
-                    // Chip Filter
+                    // Tampilkan ChoiceChip untuk filter
                     return ChoiceChip(
                       label: Text(_filterChips[index]),
-                      selected: _selectedChipIndex == index,
+                      selected:
+                          _selectedChipIndex == index, // Tandai jika terpilih
+                      // Panggil handler saat chip dipilih
                       onSelected: (selected) {
                         if (selected) {
                           _onFilterChipTapped(index);
                         }
                       },
+                      // Styling diambil dari ThemeData (chipTheme)
                     );
                   },
                 ),
               ),
             ),
 
-            // Header "Masa mendatang" (No change)
+            // --- Header "Masa mendatang" (atau header bagian lainnya) ---
             Padding(
               padding: const EdgeInsets.only(
                 left: 16.0,
@@ -178,6 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 children: [
                   Text(
+                    // TODO: Buat teks ini dinamis atau sesuai bagian list
                     'Masa mendatang',
                     style: TextStyle(
                       fontSize: 15,
@@ -186,77 +213,91 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_drop_up,
-                    color: Colors.grey[600],
-                    size: 20,
-                  ), // Atau logic untuk expand/collapse
+                  // TODO: Ikon ini bisa untuk expand/collapse bagian list
+                  Icon(Icons.arrow_drop_up, color: Colors.grey[600], size: 20),
                 ],
               ),
             ),
 
-            // === List To-Do with Loading Indicator ===
+            // --- Area Daftar Tugas (Dengan Loading & Empty State) ---
             Expanded(
+              // Agar mengisi sisa ruang vertikal
               child:
                   todoProvider
-                          .isLoading // Check loading state
-                      ? const Center(
-                        child: CircularProgressIndicator(),
-                      ) // Show loader
-                      : displayedTodos
-                          .isEmpty // Check if list is empty after loading
+                          .isLoading // Cek apakah sedang loading?
+                      // Tampilkan indikator loading jika true
+                      ? const Center(child: CircularProgressIndicator())
+                      // Jika tidak loading, cek apakah daftar tugas kosong?
+                      : displayedTodos.isEmpty
+                      // Tampilkan pesan jika kosong
                       ? Center(
                         child: Text(
-                          'Tidak ada tugas di kategori "$selectedCategory"',
-                          style: TextStyle(color: Colors.grey[600]),
+                          'Tidak ada tugas di kategori "$selectedCategory".\nCoba tambah tugas baru!',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       )
+                      // Jika tidak loading dan tidak kosong, tampilkan list
                       : ListView.separated(
-                        // Show list if not loading and not empty
-                        itemCount: displayedTodos.length,
+                        itemCount: displayedTodos.length, // Jumlah item
                         separatorBuilder:
                             (context, index) => Divider(
-                              height: 1,
-                              indent: 56,
-                              endIndent: 16,
-                              color: Colors.grey[200],
+                              // Garis pemisah
+                              height: 1, // Tinggi divider
+                              indent:
+                                  56, // Jarak dari kiri (setelah ikon check)
+                              endIndent: 16, // Jarak dari kanan
+                              color: Colors.grey[200], // Warna divider
                             ),
                         itemBuilder: (context, index) {
+                          // Ambil data todo untuk item saat ini
                           final todo = displayedTodos[index];
-                          // Find original index for UNDO if needed
+                          // Cari index asli di list lengkap (PENTING untuk Undo)
                           final originalIndex = todoProvider.todos.indexWhere(
                             (item) => item.id == todo.id,
                           );
 
+                          // Buat widget TodoListItem
                           return TodoListItem(
-                            key: ValueKey(todo.id),
-                            todo: todo,
-                            // --- Callbacks (No async/await needed here) ---
-                            onTap:
-                                () => context
-                                    .read<TodoListProvider>()
-                                    .toggleDone(todo.id),
+                            key: ValueKey(
+                              todo.id,
+                            ), // Key unik untuk performa & animasi
+                            todo: todo, // Kirim data todo ke item
+                            // --- Callback yang diteruskan ke TodoListItem ---
+                            // 1. onTap: Untuk navigasi ke halaman detail
+                            onTap: () {
+                              // Navigasi ke TodoDetailScreen, kirim objek todo
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TodoDetailScreen(todo: todo),
+                                ),
+                              );
+                            },
+                            // 2. onDelete: Aksi saat tombol hapus di slide ditekan
                             onDelete: () async {
-                              // Make this specific callback async if needed
-                              // Call removeTodo and wait for the result (the removed item)
+                              // Jadikan async karena removeTodo async
+                              // Panggil provider untuk hapus, tunggu hasilnya (Todo yg dihapus)
                               final removedTodo = await context
                                   .read<TodoListProvider>()
                                   .removeTodo(todo.id);
 
-                              // Show SnackBar only if deletion was successful
-                              if (removedTodo != null && mounted) {
-                                final indexToRemove =
-                                    originalIndex; // Capture index
-                                // Use addPostFrameCallback to ensure build context is stable
+                              // Jika berhasil dihapus (removedTodo tidak null) dan widget masih mounted
+                              if (removedTodo != null && context.mounted) {
+                                // Simpan index asli sebelum menampilkan SnackBar
+                                final indexToRemove = originalIndex;
+                                // Tampilkan SnackBar setelah frame selesai build
                                 WidgetsBinding.instance.addPostFrameCallback((
                                   _,
                                 ) {
-                                  if (mounted) {
-                                    // Double check mounted state
+                                  if (context.mounted) {
+                                    // Cek lagi jika mounted
                                     ScaffoldMessenger.of(
                                       context,
-                                    ).hideCurrentSnackBar();
+                                    ).hideCurrentSnackBar(); // Sembunyikan snackbar lama
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
@@ -265,6 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         duration: const Duration(seconds: 3),
                                         action: SnackBarAction(
                                           label: 'UNDO',
+                                          // Panggil handler undo dengan index asli dan data yg dihapus
                                           onPressed:
                                               () => _handleUndoDelete(
                                                 indexToRemove,
@@ -277,26 +319,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                 });
                               }
                             },
+                            // 3. onToggleStar: Aksi saat tombol bintang di slide ditekan
                             onToggleStar:
                                 () => context
                                     .read<TodoListProvider>()
                                     .toggleStar(todo.id),
+                            // 4. onSetDate: Aksi saat tombol tanggal/detail di slide ditekan (Navigasi)
                             onSetDate: () {
-                              print(
-                                "Set date action triggered for: ${todo.title}",
-                              );
-                              // Example: Call provider after date picker result
-                              // context.read<TodoListProvider>().updateTodoDate(todo.id, 'New Date');
-                              ScaffoldMessenger.of(
+                              // Navigasi ke detail screen (sama seperti onTap utama)
+                              Navigator.push(
                                 context,
-                              ).hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Atur tanggal untuk: ${todo.title}',
-                                  ),
-                                  duration: const Duration(seconds: 1),
+                                MaterialPageRoute(
+                                  builder: (_) => TodoDetailScreen(todo: todo),
                                 ),
+                              );
+                              print(
+                                "Slide menu 'Detail' ditekan untuk: ${todo.title}",
                               );
                             },
                           );
@@ -306,15 +344,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+
+      // --- Floating Action Button (Tombol Tambah) ---
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTodoDialog,
-        tooltip: 'Tambah Tugas',
-        child: const Icon(Icons.add, color: Colors.white),
+        onPressed: _showAddTodoDialog, // Panggil dialog tambah
+        tooltip: 'Tambah Tugas', // Teks saat ditahan lama
+        child: const Icon(Icons.add, color: Colors.white), // Ikon tambah
+        // Styling FAB diambil dari ThemeData (floatingActionButtonTheme)
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.endFloat, // Posisi di kanan bawah
+      // --- Bottom Navigation Bar ---
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: _selectedBottomNavIndex,
-        onTap: _onBottomNavItemTapped,
+        currentIndex: _selectedBottomNavIndex, // Kirim index aktif
+        onTap: _onBottomNavItemTapped, // Kirim handler tap
       ),
     );
   }

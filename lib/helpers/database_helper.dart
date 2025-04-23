@@ -18,6 +18,7 @@ class DatabaseHelper {
   static const String _colId = 'id';
   static const String _colTitle = 'title';
   static const String _colDate = 'date';
+  static const String _colDeadline = 'deadline'; // <-- Kolom Baru
   static const String _colIsDone = 'isDone';
   static const String _colIsStarred = 'isStarred';
   static const String _colCategory = 'category';
@@ -30,29 +31,53 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), _dbName);
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   // SQL code to create the database table
   Future _onCreate(Database db, int version) async {
+    await _createTable(db);
+  }
+
+  // Dipanggil saat versi database dinaikkan
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    print("Upgrading database from version $oldVersion to $newVersion");
+    if (oldVersion < 2) {
+      // Jika upgrade dari v1 ke v2, tambahkan kolom deadline
+      print("Adding deadline column...");
+      await db.execute(
+        'ALTER TABLE $_tableName ADD COLUMN $_colDeadline TEXT NULL',
+      );
+      print("Deadline column added.");
+    }
+    // Tambahkan blok 'if (oldVersion < X)' untuk upgrade selanjutnya
+  }
+
+  // Buat tabel (dipanggil dari onCreate dan mungkin onUpgrade jika perlu recreate)
+  Future<void> _createTable(Database db) async {
     await db.execute('''
           CREATE TABLE $_tableName (
             $_colId TEXT PRIMARY KEY,
             $_colTitle TEXT NOT NULL,
             $_colDate TEXT,
+            $_colDeadline TEXT NULL, -- Tambahkan kolom deadline
             $_colIsDone INTEGER NOT NULL,
             $_colIsStarred INTEGER NOT NULL,
             $_colCategory TEXT NOT NULL
           )
           ''');
+    print("Table $_tableName created");
   }
 
   // === CRUD Operations ===
 
-  // Insert a todo into the database
   Future<int> insertTodo(Todo todo) async {
     Database db = await database;
-    // Use conflictAlgorithm replace to handle potential duplicate IDs if needed
     return await db.insert(
       _tableName,
       todo.toMap(),
@@ -60,21 +85,17 @@ class DatabaseHelper {
     );
   }
 
-  // Retrieve all todos from the database
   Future<List<Todo>> getTodos() async {
     Database db = await database;
+    // Urutkan berdasarkan deadline (null di akhir), lalu ID
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      orderBy: '$_colId DESC', // Example: order by ID descending (newest first)
+      orderBy:
+          '$_colDeadline ASC, $_colId DESC', // Nulls last by default in SQLite ASC
     );
-
-    // Convert the List<Map<String, dynamic>> into a List<Todo>.
-    return List.generate(maps.length, (i) {
-      return Todo.fromMap(maps[i]);
-    });
+    return List.generate(maps.length, (i) => Todo.fromMap(maps[i]));
   }
 
-  // Update a todo in the database
   Future<int> updateTodo(Todo todo) async {
     Database db = await database;
     return await db.update(
@@ -85,7 +106,6 @@ class DatabaseHelper {
     );
   }
 
-  // Delete a todo from the database
   Future<int> deleteTodo(String id) async {
     Database db = await database;
     return await db.delete(_tableName, where: '$_colId = ?', whereArgs: [id]);
