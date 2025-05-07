@@ -43,6 +43,7 @@ dependencies:
   timezone: ^0.10.0 # Cek versi terbaru
 
 dev_dependencies:
+  # flutter_native_splash: ^2.4.6
   flutter_test:
     sdk: flutter
 
@@ -52,17 +53,14 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  flutter_native_splash: ^2.3.2
-
-flutter_native_splash:
-  color: "#FFFFFF"
-  image: assets/images/logo.png
-  # android_12: true
-  # ios: true
-  # # (Opsional) Kustomisasi lebih lanjut untuk Android
-  # android: true # Aktifkan untuk Android
-  # # (Opsional) Kustomisasi lebih lanjut untuk iOS
-  # ios_content_mode: center
+  
+# flutter_native_splash:
+#   color: "#FFFFFF"
+#   image: assets/images/logo.png
+# #   android:
+# #     color: "#FFFFFF"
+# #     image: assets/images/logo.png
+# # #  ios_content_mode: center
 
 
 # For information on the generic Dart part of this file, see the
@@ -77,7 +75,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/images/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
