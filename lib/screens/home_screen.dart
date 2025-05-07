@@ -119,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => TodoDetailScreen(todo: newTodo),
+                      builder: (_) => TodoDetailScreen(todoId: newTodo.id),
                     ),
                   ).then((_) {
                     // Saat kembali dari detail, update deadline
@@ -162,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => TodoDetailScreen(todo: newTodo),
+                        builder: (_) => TodoDetailScreen(todoId: newTodo.id),
                       ),
                     ).then((_) {
                       Provider.of<TodoListProvider>(
@@ -346,7 +346,7 @@ class TodoListPage extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => TodoDetailScreen(todo: todo),
+                                builder: (_) => TodoDetailScreen(todoId: todo.id),
                               ),
                             );
                           },
@@ -403,7 +403,7 @@ class TodoListPage extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => TodoDetailScreen(todo: todo),
+                                builder: (_) => TodoDetailScreen(todoId: todo.id),
                               ),
                             );
                           },
