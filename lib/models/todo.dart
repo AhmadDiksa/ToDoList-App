@@ -66,4 +66,30 @@ class Todo {
     // Tambahkan field baru ke toString untuk debug
     return 'Todo{id: $id, title: $title, deadline: $deadline, reminder: $reminderDateTime, repeat: $repeatRule, notes: $notes, ...}';
   }
+
+  Todo copyWith({
+    String? id,
+    String? title,
+    String? date,
+    DateTime? deadline,
+    DateTime? reminderDateTime,
+    String? repeatRule,
+    String? notes,
+    bool? isDone,
+    bool? isStarred,
+    String? category,
+  }) {
+    return Todo(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      date: date ?? this.date,
+      deadline: deadline ?? this.deadline,
+      reminderDateTime: reminderDateTime ?? this.reminderDateTime,
+      repeatRule: repeatRule ?? this.repeatRule,
+      notes: notes ?? this.notes,
+      isDone: isDone ?? this.isDone,
+      isStarred: isStarred ?? this.isStarred,
+      category: category ?? this.category,
+    );
+  }
 }
