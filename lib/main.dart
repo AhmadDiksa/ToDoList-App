@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Import untuk locale DateFormat
-import 'screens/home_screen.dart';
+// import 'screens/home_screen.dart';
 import 'providers/todo_list_provider.dart';
 import 'services/notification_service.dart'; // <-- Import Notification Service
+import 'screens/splash_screen.dart';  
 
 // Fungsi main menjadi async
 Future<void> main() async {
@@ -97,7 +98,7 @@ class MyApp extends StatelessWidget {
           // ... styling lain
         ),
       ),
-      home: const HomeScreen(), // Halaman utama
+      home: const SplashScreen(), // Halaman utama
       debugShowCheckedModeBanner: false, // Hilangkan banner debug
     );
   }
