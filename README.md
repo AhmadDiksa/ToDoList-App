@@ -44,6 +44,8 @@ A feature-rich To-Do List application built with Flutter. This app helps you org
 - Tap the "+" floating action button to add a new task.
 - Swipe tasks to reveal options like delete, star, or set details.
 - Tap a task to view and edit its details.
+- Use the calendar screen to view tasks by date.
+- Check notifications for reminders and deadlines.
 
 ## Technologies Used
 
@@ -52,6 +54,22 @@ A feature-rich To-Do List application built with Flutter. This app helps you org
 - SQLite for local data persistence (via DatabaseHelper)
 - Local notifications for reminders and deadlines
 - intl package for locale-specific date formatting
+
+## Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bugfix.
+3. Make your changes and commit them with clear messages.
+4. Push your branch to your fork.
+5. Open a pull request describing your changes.
+
+Please ensure your code follows the existing style and includes relevant tests.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
