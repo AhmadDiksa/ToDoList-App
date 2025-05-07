@@ -44,6 +44,7 @@ dependencies:
   intl: ^0.19.0 # Cek versi terbaru
   timezone: ^0.10.0 # Cek versi terbaru
   table_calendar: ^3.0.9 # Cek versi terbaru di pub.dev
+  fl_chart: ^0.64.0 # Cek versi terbaru di pub.dev
 
 
 dev_dependencies:
