@@ -278,4 +278,23 @@ class TodoListProvider with ChangeNotifier {
       }
     }
   }
+  /// Update entire Todo object
+  Future<void> updateTodo(Todo updatedTodo) async {
+    final index = _todos.indexWhere((todo) => todo.id == updatedTodo.id);
+    if (index != -1) {
+      final oldTodo = _todos[index];
+      _todos[index] = updatedTodo;
+      notifyListeners();
+      try {
+        await _dbHelper.updateTodo(updatedTodo);
+        // Optionally reschedule notifications if needed
+        await _notificationService.scheduleDeadlineNotification(updatedTodo);
+        await _notificationService.scheduleReminderNotification(updatedTodo);
+      } catch (e) {
+        print("Error updating todo ${updatedTodo.id}: $e");
+        _todos[index] = oldTodo;
+        notifyListeners(); // Revert
+      }
+    }
+  }
 } // Akhir class TodoListProvider
