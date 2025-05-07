@@ -238,7 +238,7 @@ class CalendarScreenState extends State<CalendarScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => TodoDetailScreen(todo: event),
+builder: (_) => TodoDetailScreen(todoId: event.id),
                               ),
                             );
                           },
