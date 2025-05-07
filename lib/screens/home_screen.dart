@@ -8,6 +8,7 @@ import '../providers/todo_list_provider.dart';
 import '../models/todo.dart';
 import 'todo_detail_screen.dart';
 import 'calendar_screen.dart'; // Import CalendarScreen
+import 'my_tasks_summary_screen.dart'; // Import MyTasksSummaryScreen
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,8 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onFilterChipTapped: _onFilterChipTapped, // Kirim callback
       ),
       CalendarScreen(key: _calendarScreenKey), // Beri key ke CalendarScreen
-      const PlaceholderWidget(title: 'Halaman "7"'),
-      const PlaceholderWidget(title: 'Halaman "Milikku"'),
+      const MyTasksSummaryScreen(),
     ];
   }
 
@@ -159,17 +159,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       orElse: () => todoProvider.todos.first,
                     );
                     Navigator.of(dialogContext).pop();
-                    Navigator.push(
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TodoDetailScreen(todoId: newTodo.id),
+                    ),
+                  ).then((_) {
+                    Provider.of<TodoListProvider>(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => TodoDetailScreen(todoId: newTodo.id),
-                      ),
-                    ).then((_) {
-                      Provider.of<TodoListProvider>(
-                        context,
-                        listen: false,
-                      ).updateTodoDeadline(newTodo.id, defaultDate);
-                    });
+                      listen: false,
+                    ).updateTodoDeadline(newTodo.id, defaultDate);
+                  });
                     return;
                   }
                 }
