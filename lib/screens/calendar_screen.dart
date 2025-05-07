@@ -200,7 +200,7 @@ class CalendarScreenState extends State<CalendarScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset('assets/images/calendar_empty.png', height: 150, color: Colors.grey[300]), // Ganti dengan path aset Anda
+                        Image.asset('assets/images/break.png', height: 150, color: Colors.grey[300]), // Ganti dengan path aset Anda
                         const SizedBox(height: 16),
                         Text(
                           'Tidak ada tugas pada tanggal ini.',
