@@ -2,46 +2,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/date_symbol_data_local.dart'; // Import untuk locale DateFormat
-// import 'screens/home_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'screens/splash_screen.dart'; // Layar awal
 import 'providers/todo_list_provider.dart';
-import 'services/notification_service.dart'; // <-- Import Notification Service
-import 'screens/splash_screen.dart';  
+import 'services/notification_service.dart';
 
-// Fungsi main menjadi async
 Future<void> main() async {
-  // Pastikan Flutter binding siap
+  // Pastikan Flutter binding siap sebelum plugin/async
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inisialisasi locale untuk DateFormat (PENTING!)
-  await initializeDateFormatting(
-    'id_ID',
-    null,
-  ); // Ganti 'id_ID' jika perlu locale lain
 
   // Inisialisasi Notification Service (termasuk timezone)
   await NotificationService().initialize();
 
-  // Setup System UI Overlay (Status bar style)
+  // Setup System UI Overlay
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor:
+          Colors.transparent, // Transparan agar background body terlihat
       statusBarIconBrightness:
-          Brightness.dark, // Ikon gelap untuk background terang
+          Brightness.dark, // Ikon status bar gelap (untuk background terang)
       statusBarBrightness: Brightness.light, // Untuk iOS
     ),
   );
 
-  // Jalankan aplikasi dengan Provider
   runApp(
     ChangeNotifierProvider(
-      create: (context) => TodoListProvider(), // Buat instance TodoListProvider
-      child: const MyApp(), // Root widget aplikasi
+      create: (context) => TodoListProvider(), // Buat instance provider
+      child: const MyApp(), // Child-nya adalah aplikasi utama kita
     ),
   );
 }
 
-// Widget MyApp (Root Aplikasi)
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -49,12 +41,41 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'To-Do List App',
+      // --- Setup Localizations untuk Bahasa Indonesia ---
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('id', ''), // Bahasa Indonesia
+        Locale('en', ''), // Bahasa Inggris (sebagai fallback)
+      ],
+      locale: const Locale('id', ''), // Set default locale ke Indonesia
+      // --- Akhir Setup Localizations ---
       theme: ThemeData(
-        // Tema aplikasi (seperti sebelumnya)
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.grey[50],
         fontFamily: 'Roboto',
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        appBarTheme: AppBarTheme(
+          // Tema default untuk AppBar
+          backgroundColor: Colors.grey[50],
+          foregroundColor: Colors.black87, // Warna ikon dan teks di AppBar
+          elevation: 0.5,
+          systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+            // Pastikan status bar tetap gelap
+            statusBarColor: Colors.transparent,
+          ),
+          titleTextStyle: const TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.w500, // Sedikit tebal untuk judul AppBar
+          ),
+          iconTheme: const IconThemeData(
+            color: Colors.black54,
+          ), // Warna ikon di AppBar
+        ),
         chipTheme: ChipThemeData(
           backgroundColor: Colors.grey[200],
           disabledColor: Colors.grey.shade300,
@@ -71,12 +92,10 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.w500,
             fontSize: 13,
           ),
-          brightness: Brightness.light,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
           elevation: 0,
-          pressElevation: 2,
         ),
         dividerTheme: DividerThemeData(color: Colors.grey[200], thickness: 1),
         iconTheme: IconThemeData(color: Colors.grey[600]),
@@ -86,20 +105,19 @@ class MyApp extends StatelessWidget {
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: Colors.blueAccent,
           elevation: 4.0,
+          foregroundColor: Colors.white,
         ),
-        // Tambahkan tema untuk Time Picker jika perlu
-        timePickerTheme: TimePickerThemeData(
-          backgroundColor: Colors.white,
-          // ... styling lain
-        ),
-        // Tambahkan tema untuk Date Picker jika perlu
-        datePickerTheme: DatePickerThemeData(
-          backgroundColor: Colors.white,
-          // ... styling lain
+        listTileTheme: const ListTileThemeData(
+          // Tema default untuk ListTile
+          dense: true, // Membuat ListTile lebih rapat
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 0,
+            vertical: 0,
+          ), // Hapus padding default jika perlu
         ),
       ),
-      home: const SplashScreen(), // Halaman utama
-      debugShowCheckedModeBanner: false, // Hilangkan banner debug
+      home: const SplashScreen(), // Mulai dari SplashScreen
+      debugShowCheckedModeBanner: false,
     );
   }
 }
